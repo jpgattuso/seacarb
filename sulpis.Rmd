@@ -1,0 +1,51 @@
+---
+title: "Check values new formulations of K1 and K2"
+author: "Jean-Pierre Gattuso"
+date: '`r format(Sys.Date(), "%d %B %Y")`'
+output:
+  rmarkdown::html_document:
+    theme: paper
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(seacarb)
+library(dplyr)
+library(knitr)
+```
+
+Starting in October 2020, all seacarb functions using K1 and K2 provide 3 additional formulations to calculate these constants: Millero et al. (2002; "m02"), Papadimitriou et al. (2018; "p18") and Sulpis et al. (2020; s20). Here I compare output values with those from CO2sys provided by Olivier Sulpis.
+
+## From CO2sys
+
+```{r sulpis data, echo=TRUE, warning = FALSE}
+#From Sulpis (email 30 Sep. 2020)
+ # For S = 35 and T = -1°C
+# pK1                                      pK2
+# Millero  et al 2002                          6.146706699078012       9.433001289078016
+# Papadimitriou et al 2018             6.143438316887924       9.416062189610315
+# Sulpis et al 2020                             6.174290754658531       9.446337883724114
+check <- tibble(formulation = c("Millero et al. (2002)", "Papadimitriou et al. (2018)", "Sulpis et al. (2020)"),
+       pk1_CO2sys = c(6.146706699078012, 6.143438316887924, 6.174290754658531),
+       pk2_CO2sys = c(9.433001289078016, 9.416062189610315, 9.446337883724114)
+)
+```
+## From seacarb
+```{r seacarb data, echo=TRUE, warning = FALSE}
+
+check <- check %>% 
+  dplyr::mutate(pk1_seacarb = c(
+  -log10(K1(S=35, T=-1, P=0, k1k2="m02", pHscale="T", warn="n")), 
+  -log10(K1(S=35, T=-1, P=0, k1k2="p18", pHscale="T", warn="n")), 
+  -log10(K1(S=35, T=-1, P=0, k1k2="s20", pHscale="T", warn="n"))
+  ),
+  pk2_seacarb = c(
+    -log10(K2(S=35, T=-1, P=0, k1k2="m02", pHscale="T", warn="n")),
+    -log10(K2(S=35, T=-1, P=0, k1k2="p18", pHscale="T", warn="n")),
+    -log10(K2(S=35, T=-1, P=0, k1k2="s20", pHscale="T", warn="n"))
+)) %>% 
+  dplyr::select(formulation, pk1_CO2sys, pk1_seacarb, pk2_CO2sys, pk2_seacarb)
+kable(check)
+```
+
